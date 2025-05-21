@@ -1,141 +1,327 @@
-    /* Global Styles */
-    
-    body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background-color: #f0f2f5;
-        min-height: 100vh;
+/* Global Styles */
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f2f5;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+
+/* Container and Layout */
+
+.container {
+    max-width: 1400px !important;
+    margin: 0 auto;
+    padding: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+h2.text-center {
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+}
+
+
+/* Card Styles */
+
+.card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+    height: 100%;
+    border: none;
+    border-radius: 8px;
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+
+/* Input Field Groups */
+
+.form-label {
+    font-weight: 500;
+    color: #2c3e50;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.form-control {
+    border-radius: 6px;
+    border: 1px solid #e1e4e8;
+    padding: 0.5rem 1rem;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 1rem;
+}
+
+
+/* Upload Section */
+
+#excelFile {
+    display: inline-block;
+    width: calc(100% - 170px);
+    margin-right: 10px;
+    margin-bottom: 10px;
+    vertical-align: middle;
+}
+
+#downloadLink {
+    display: inline-block;
+    margin-top: 10px;
+    width: auto;
+    white-space: nowrap;
+}
+
+
+/* Alert Boxes */
+
+.alert {
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+
+/* Table Styles */
+
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th,
+.table td {
+    padding: 0.75rem;
+    vertical-align: middle;
+}
+
+.table th {
+    background-color: #2c3e50 !important;
+    color: white !important;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+
+/* Button Styles */
+
+.btn {
+    font-weight: 500;
+    padding: 0.5rem 1.5rem;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    display: inline-block;
+    text-align: center;
+    transition: all 0.3s;
+    margin-bottom: 0.5rem;
+}
+
+.btn-primary {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.btn-info {
+    background-color: #0dcaf0;
+    color: white;
+}
+
+.btn-success {
+    background-color: #198754;
+    color: white;
+}
+
+.btn-outline-primary {
+    background-color: transparent;
+    border: 1px solid #0d6efd;
+    color: #0d6efd;
+}
+
+
+/* Data Preview Section */
+
+#dataPreviewSection {
+    width: 100%;
+}
+
+.col-md-4 {
+    width: 100%;
+    margin-bottom: 1.5rem;
+}
+
+
+/* Passing Marks Calculator */
+
+.bg-light {
+    background-color: #f8f9fa;
+    padding: 1.25rem;
+    border-radius: 8px;
+}
+
+
+/* Responsive Layout */
+
+@media (min-width: 576px) {
+    h2.text-center {
+        font-size: 2rem;
     }
-    /* Container and Layout */
-    
+    #downloadLink {
+        margin-top: 0;
+    }
+}
+
+@media (min-width: 768px) {
     .container {
-        max-width: 100% !important;
-        padding: 0 2rem;
+        padding: 2rem;
     }
-    
-    .col-md-8 {
-        max-width: 100% !important;
-        flex: 0 0 100%;
+    .col-md-4 {
+        width: calc(50% - 1rem);
+        float: left;
+        margin-right: 1rem;
     }
-    /* Card Styles */
-    
-    .card {
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin-bottom: 1rem;
-        height: 100%;
-        border: none;
-        border-radius: 8px;
+    .col-md-4:nth-child(2n) {
+        margin-right: 0;
     }
-    /* Header Styles */
-    
-    .card-header {
-        padding: 1rem;
-        border-bottom: none;
-        border-radius: 8px 8px 0 0 !important;
+    .col-md-6 {
+        width: 50%;
+        float: left;
+        padding: 0 0.75rem;
     }
-    
-    .card-header h5 {
-        margin-bottom: 0;
-        color: white;
-        font-weight: 600;
+    .text-center.mb-4 {
+        clear: both;
     }
-    
-    .card-header small {
-        color: rgba(255, 255, 255, 0.9);
-        font-size: 0.85rem;
+    #excelFile {
+        width: calc(100% - 180px);
     }
-    /* Table Styles */
-    
-    .table {
-        margin-bottom: 0;
+}
+
+@media (min-width: 992px) {
+    .col-md-4 {
+        width: calc(33.333% - 1rem);
+        margin-right: 1rem;
     }
-    
-    .table th {
-        background-color: #2c3e50 !important;
-        color: white !important;
-        border-bottom: none;
-        font-weight: 600;
+    .col-md-4:nth-child(2n) {
+        margin-right: 1rem;
     }
-    
-    .table td {
-        vertical-align: middle;
+    .col-md-4:nth-child(3n) {
+        margin-right: 0;
     }
-    /* Button Styles */
-    
-    .btn {
-        font-weight: 500;
-        padding: 0.5rem 1.5rem;
-        border-radius: 6px;
-        border: none;
-        min-width: 120px;
-    }
-    
     .btn-group {
-        gap: 0.5rem;
+        display: inline-flex;
     }
-    /* Form Styles */
-    
-    .form-label {
-        font-weight: 500;
-        color: #2c3e50;
+    .btn-group .btn {
+        margin-bottom: 0;
+        margin-right: 0.5rem;
     }
-    
-    .form-control {
-        border-radius: 6px;
-        border: 1px solid #e1e4e8;
-        padding: 0.5rem 1rem;
+}
+
+
+/* Clearfix for floated elements */
+
+.row::after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+
+/* Fixed height for cards at larger screens */
+
+@media (min-width: 768px) {
+    #dataPreviewSection .card {
+        min-height: 500px;
     }
-    
-    .form-control:read-only {
-        background-color: #f8f9fa;
+}
+
+
+/* Additional button group styling */
+
+.btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+@media (max-width: 575px) {
+    .btn-group {
+        flex-direction: column;
+        width: 100%;
     }
-    /* Table Container */
-    
-    .table-responsive {
-        max-height: 500px;
-        overflow-y: auto;
-        border-radius: 8px;
+    .btn-group .btn {
+        width: 100%;
+        margin-right: 0;
     }
-    /* Data Preview Section */
-    
-    #dataPreviewSection {
-        display: flex;
-        flex-wrap: wrap;
+    .btn {
+        width: 100%;
+        margin-bottom: 0.75rem;
     }
-    
-    #dataPreviewSection .col-md-4 {
+    #convertBtn {
         margin-bottom: 1rem;
     }
-    
-    .table th {
-        position: sticky;
-        top: 0;
-        background-color: inherit;
-        z-index: 1;
+}
+
+
+/* Header Styles */
+
+.card-header {
+    padding: 1rem;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0 !important;
+}
+
+.card-header h5 {
+    margin-bottom: 0;
+    color: white;
+    font-weight: 600;
+}
+
+.card-header small {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.85rem;
+}
+
+
+/* Make buttons full width on small screens */
+
+@media (max-width: 575px) {
+    #downloadLink {
+        width: 100%;
+        margin-top: 0.5rem;
+        margin-left: 0 !important;
     }
-    
-    #originalPreviewSection,
-    #mappedPreviewSection {
-        margin-top: 2rem;
-        padding-top: 1rem;
-        border-top: 1px solid #dee2e6;
+    #excelFile {
+        width: 100%;
     }
-    
-    #mappedPreviewSection {
-        background-color: #f8f9fa;
-        padding: 1rem;
-        border-radius: 0.25rem;
-    }
-    /* Custom styling for file input */
-    
-    input[type="file"] {
-        padding: 0.375rem 0.75rem;
-        border: 1px solid #ced4da;
-        border-radius: 0.25rem;
-    }
-    /* Responsive adjustments */
-    
-    @media (max-width: 768px) {
-        .col-md-6 {
-            margin-bottom: 2rem;
-        }
-    }
+}
+
+
+/* Better spacing for the input field sections */
+
+.mb-2 {
+    margin-bottom: 1rem !important;
+}
+
+h5 {
+    margin-bottom: 1rem;
+}
+
+
+/* Improve the mobile view of the calculator section */
+
+.row.mt-4 {
+    margin-top: 1.5rem;
+}
