@@ -1,26 +1,20 @@
 /**
- * Download a file from a specified file path
  * @param {string} filePath - Path to the file to be downloaded
  * @param {string} fileName - Optional custom name for the downloaded file
  */
 function downloadFile(filePath, fileName = null) {
     try {
-        // Create an anchor element
+
         const downloadLink = document.createElement('a');
 
-        // Set the href attribute to the file path
         downloadLink.href = filePath;
 
-        // Set download attribute to force download instead of navigation
         downloadLink.download = fileName || filePath.split('/').pop();
 
-        // Append to the document
         document.body.appendChild(downloadLink);
 
-        // Trigger the download
         downloadLink.click();
 
-        // Clean up - remove the element after download is initiated
         document.body.removeChild(downloadLink);
 
         console.log(`Download initiated for: ${filePath}`);
@@ -36,10 +30,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (downloadLinkElement) {
         downloadLinkElement.addEventListener("click", function() {
-            // Replace this with your actual file path
+
             const filePath = "./demo_tamplete.xlsx";
 
-            // Optional custom filename for the downloaded file
             const fileName = "Tamplete.xlsx";
 
             downloadFile(filePath, fileName);
@@ -85,12 +78,10 @@ const FINAL_STAGE_MAPPINGS = {
 };
 
 /**
- * Populates a table with the given data
  * @param {Array} data - Array of objects containing the data
  * @param {HTMLElement} tableBody - Table body element to populate
  */
 /**
- * Populates a table with the given data and highlights invalid values and min/max
  * @param {Array} data - Array of objects containing the data
  * @param {HTMLElement} tableBody - Table body element to populate
  * @param {Object} caps - Object containing upper cap values for each field
@@ -135,7 +126,7 @@ function populateTable(data, tableBody, caps = null) {
             // Add color coding
             if (field === 'Total') {
                 if (value === stats.Total.max) {
-                    td.style.backgroundColor = '#81c784'; // Darker green for max total
+                    td.style.backgroundColor = '#81c784';
                     td.title = 'Highest total score';
                     td.style.fontWeight = 'bold';
                 }
@@ -180,7 +171,6 @@ function populateTable(data, tableBody, caps = null) {
 }
 
 /**
- * Maps a value from one range to another
  * @param {number} value - The input value to map
  * @param {number} fromMax - The maximum value of the input range
  * @param {number} toMax - The maximum value of the target range
@@ -191,7 +181,6 @@ function mapValue(value, fromMax, toMax) {
 }
 
 /**
- * Handles the file upload and displays original data
  * @param {Event} e - Change event
  */
 async function handleFileUpload(e) {
@@ -236,11 +225,9 @@ async function handleFileUpload(e) {
 }
 
 /**
- * Processes the Excel file and maps the values according to user inputs
  * @param {Event} e - Click event
  */
 /**
- * Extracts field name and cap value from a column header
  * @param {string} header - Column header text
  * @returns {Object} Object containing field and cap value if found
  */
@@ -293,9 +280,6 @@ async function processExcel(e) {
     const vivaMax = caps.VIVA;
 
     try {
-
-
-
         // First stage mapping
         const firstStageData = originalJsonData.map(row => ({
             ESE: Math.round(mapValue(row.ESE || 0, eseMax, FIRST_STAGE_MAPPINGS.ESE) * 100) / 100,
@@ -353,7 +337,6 @@ async function processExcel(e) {
 }
 
 /**
- * Downloads the Excel file for the specified mapping
  * @param {string} stage - Either 'first' or 'final'
  */
 function downloadExcel(stage) {
@@ -373,10 +356,6 @@ function downloadExcel(stage) {
 // Event Listeners
 convertBtn.addEventListener('click', processExcel);
 
-// Initialize the application
-/**
- * Initialize the application state
- */
 function initializeApp() {
     // Reset all states
     originalJsonData = null;
@@ -390,9 +369,7 @@ function initializeApp() {
     if (dataPreviewSection) dataPreviewSection.style.display = 'none';
 }
 
-/**
- * Updates the table highlighting based on current caps
- */
+
 function updateTableHighlighting() {
     if (!originalJsonData) return;
 
