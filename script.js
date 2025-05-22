@@ -4,19 +4,12 @@
  */
 function downloadFile(filePath, fileName = null) {
     try {
-
         const downloadLink = document.createElement('a');
-
         downloadLink.href = filePath;
-
         downloadLink.download = fileName || filePath.split('/').pop();
-
         document.body.appendChild(downloadLink);
-
         downloadLink.click();
-
         document.body.removeChild(downloadLink);
-
         console.log(`Download initiated for: ${filePath}`);
     } catch (error) {
         console.error("Error downloading file:", error);
@@ -30,11 +23,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (downloadLinkElement) {
         downloadLinkElement.addEventListener("click", function() {
-
             const filePath = "./demo_tamplete.xlsx";
-
             const fileName = "Tamplete.xlsx";
-
             downloadFile(filePath, fileName);
         });
         console.log("Download link event listener added");
@@ -48,10 +38,14 @@ const fileInput = document.getElementById('excelFile');
 const convertBtn = document.getElementById('convertBtn');
 const downloadFirstBtn = document.getElementById('downloadFirstBtn');
 const downloadFinalBtn = document.getElementById('downloadFinalBtn');
+const downloadGradesBtn = document.getElementById('downloadGradesBtn');
 const dataPreviewSection = document.getElementById('dataPreviewSection');
 const originalDataTable = document.getElementById('originalDataTable');
 const firstMappedDataTable = document.getElementById('firstMappedDataTable');
 const mappedDataTable = document.getElementById('mappedDataTable');
+const finalGradesTable = document.getElementById('finalGradesTable');
+const passingMarksSection = document.getElementById('passingMarksSection');
+const calculateGradesBtn = document.getElementById('calculateGradesBtn');
 
 /**
  * Global variables to store data
@@ -59,6 +53,7 @@ const mappedDataTable = document.getElementById('mappedDataTable');
  */
 let originalJsonData = null;
 let processedWorkbook = null;
+let finalGradesData = null;
 
 // Constants for target mappings
 const FIRST_STAGE_MAPPINGS = {
@@ -80,33 +75,38 @@ const FINAL_STAGE_MAPPINGS = {
 /**
  * @param {Array} data - Array of objects containing the data
  * @param {HTMLElement} tableBody - Table body element to populate
- */
-/**
- * @param {Array} data - Array of objects containing the data
- * @param {HTMLElement} tableBody - Table body element to populate
  * @param {Object} caps - Object containing upper cap values for each field
+ * @param {boolean} includeGrades - Whether to include grades column
  */
-function populateTable(data, tableBody, caps = null) {
+function populateTable(data, tableBody, caps = null, includeGrades = false) {
     tableBody.innerHTML = '';
 
-    // Calculate row totals
+    // Calculate row totals if not already present
     const dataWithTotals = data.map(row => {
-        const total = ['ESE', 'IA', 'CSE', 'TW', 'VIVA'].reduce((sum, field) => sum + (row[field] || 0), 0);
-        return {...row, Total: total };
+        if (row.Total === undefined) {
+            const total = ['ESE', 'IA', 'CSE', 'TW', 'VIVA'].reduce((sum, field) => sum + (row[field] || 0), 0);
+            return {...row, Total: Math.round(total * 100) / 100 };
+        }
+        return row;
     });
 
-    // Find min and max values for each field including Total
-    const stats = ['ESE', 'IA', 'CSE', 'TW', 'VIVA', 'Total'].reduce((acc, field) => {
-        acc[field] = {
-            min: Math.min(...dataWithTotals.map(row => row[field] || 0)),
-            max: Math.max(...dataWithTotals.map(row => row[field] || 0))
-        };
+    // Determine headers based on whether grades are included
+    const headers = includeGrades ? ['ESE', 'IA', 'CSE', 'TW', 'VIVA', 'Total', 'Grade'] : ['ESE', 'IA', 'CSE', 'TW', 'VIVA', 'Total'];
+
+    // Find min and max values for numeric fields
+    const stats = headers.reduce((acc, field) => {
+        if (field !== 'Grade') {
+            acc[field] = {
+                min: Math.min(...dataWithTotals.map(row => row[field] || 0)),
+                max: Math.max(...dataWithTotals.map(row => row[field] || 0))
+            };
+        }
         return acc;
     }, {});
 
     // Create table header row
     const headerRow = document.createElement('tr');
-    ['ESE', 'IA', 'CSE', 'TW', 'VIVA', 'Total'].forEach(field => {
+    headers.forEach(field => {
         const th = document.createElement('th');
         th.textContent = field;
         th.style.fontWeight = 'bold';
@@ -118,19 +118,36 @@ function populateTable(data, tableBody, caps = null) {
     // Create data rows
     dataWithTotals.forEach(row => {
         const tr = document.createElement('tr');
-        ['ESE', 'IA', 'CSE', 'TW', 'VIVA', 'Total'].forEach(field => {
+        headers.forEach(field => {
             const td = document.createElement('td');
-            const value = row[field] || 0;
+            const value = row[field] || (field === 'Grade' ? '' : 0);
             td.textContent = value;
 
-            // Add color coding
+            // Add color coding for numeric fields
             if (field === 'Total') {
                 if (value === stats.Total.max) {
                     td.style.backgroundColor = '#81c784';
                     td.title = 'Highest total score';
                     td.style.fontWeight = 'bold';
                 }
-            } else {
+            } else if (field === 'Grade') {
+                // Color code grades
+                const gradeColors = {
+                    'O': '#4caf50', // Green
+                    'A+': '#66bb6a', // Light Green
+                    'A': '#81c784', // Lighter Green
+                    'B+': '#fff176', // Yellow
+                    'B': '#ffb74d', // Orange
+                    'C': '#ff8a65', // Light Red
+                    'D': '#e57373', // Red
+                    'F': '#f44336' // Dark Red
+                };
+                if (gradeColors[value]) {
+                    td.style.backgroundColor = gradeColors[value];
+                    td.style.color = ['O', 'A+', 'A', 'D', 'F'].includes(value) ? 'white' : 'black';
+                    td.style.fontWeight = 'bold';
+                }
+            } else if (field !== 'Grade') {
                 if (value === 0) {
                     td.style.backgroundColor = '#ffebee'; // Light red for zero
                 } else if (caps && value > caps[field]) {
@@ -156,18 +173,20 @@ function populateTable(data, tableBody, caps = null) {
         tableBody.appendChild(tr);
     });
 
-    // Add summary row at the bottom
-    const summaryRow = document.createElement('tr');
-    ['ESE', 'IA', 'CSE', 'TW', 'VIVA', 'Total'].forEach(field => {
-        const td = document.createElement('td');
-        const maxValue = stats[field].max;
-        td.textContent = `Max: ${maxValue}`;
-        td.style.backgroundColor = '#f5f5f5';
-        td.style.fontWeight = 'bold';
-        td.style.borderTop = '2px solid #ccc';
-        summaryRow.appendChild(td);
-    });
-    tableBody.appendChild(summaryRow);
+    // Add summary row at the bottom for numeric fields only
+    if (!includeGrades) {
+        const summaryRow = document.createElement('tr');
+        ['ESE', 'IA', 'CSE', 'TW', 'VIVA', 'Total'].forEach(field => {
+            const td = document.createElement('td');
+            const maxValue = stats[field].max;
+            td.textContent = `Max: ${maxValue}`;
+            td.style.backgroundColor = '#f5f5f5';
+            td.style.fontWeight = 'bold';
+            td.style.borderTop = '2px solid #ccc';
+            summaryRow.appendChild(td);
+        });
+        tableBody.appendChild(summaryRow);
+    }
 }
 
 /**
@@ -193,14 +212,20 @@ async function handleFileUpload(e) {
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         originalJsonData = XLSX.utils.sheet_to_json(worksheet);
 
-        // Reset processed workbook
+        // Reset processed workbook and final grades
         processedWorkbook = null;
+        finalGradesData = null;
 
         // Update table with validation highlighting
         updateTableHighlighting();
         dataPreviewSection.style.display = 'flex';
+        passingMarksSection.style.display = 'none';
+
+        // Reset buttons
         downloadFirstBtn.disabled = true;
         downloadFinalBtn.disabled = true;
+        downloadGradesBtn.disabled = true;
+        calculateGradesBtn.disabled = true;
 
         // Scroll to the data section
         dataPreviewSection.scrollIntoView({ behavior: 'smooth' });
@@ -225,9 +250,6 @@ async function handleFileUpload(e) {
 }
 
 /**
- * @param {Event} e - Click event
- */
-/**
  * @param {string} header - Column header text
  * @returns {Object} Object containing field and cap value if found
  */
@@ -240,6 +262,148 @@ function parseHeaderCap(header) {
     return null;
 }
 
+/**
+ * Assign relative grades to passing students only
+ * @param {Array} passingStudents - Array of students who passed ESE
+ * @returns {Array} - Array with grades assigned
+ */
+function assignRelativeGrades(passingStudents) {
+    if (passingStudents.length === 0) return [];
+
+    // Calculate totals for passing students
+    const totals = passingStudents.map(row =>
+        (row.ESE || 0) + (row.IA || 0) + (row.CSE || 0) + (row.TW || 0) + (row.VIVA || 0)
+    );
+
+    // Pair totals with original index and sort descending
+    const indexed = totals
+        .map((t, i) => ({ total: t, idx: i }))
+        .sort((a, b) => b.total - a.total);
+
+    const N = passingStudents.length;
+
+    // Compute "base" bucket size and remainder
+    const base = Math.floor(N / 8);
+    let rem = N - base * 8;
+
+    // Define grade order and initial counts
+    const grades = ['O', 'A+', 'A', 'B+', 'B', 'C', 'D', 'P']; // P for Pass (lowest passing grade)
+    const counts = grades.reduce((acc, g) => {
+        acc[g] = base;
+        return acc;
+    }, {});
+
+    // Distribute any leftover students starting at the middle
+    const middleOrder = ['B+', 'A', 'A+', 'O', 'D', 'C', 'B', 'P'];
+    for (let i = 0; i < rem; i++) {
+        counts[middleOrder[i]]++;
+    }
+
+    // Assign grade by slicing off each bucket from the top
+    const cutoffs = {};
+    let cursor = 0;
+    for (const g of grades) {
+        cutoffs[g] = [cursor, cursor + counts[g]]; // [start, end) in sorted list
+        cursor += counts[g];
+    }
+
+    // Build result array
+    const result = new Array(N);
+    indexed.forEach((item, rank) => {
+        // Find which grade bracket this rank falls into
+        let assigned = 'P';
+        for (const g of grades) {
+            const [start, end] = cutoffs[g];
+            if (rank >= start && rank < end) {
+                assigned = g;
+                break;
+            }
+        }
+        result[item.idx] = {
+            ...passingStudents[item.idx],
+            Total: Math.round(item.total * 100) / 100,
+            Grade: assigned
+        };
+    });
+
+    return result;
+}
+
+/**
+ * Calculate final grades with ESE passing marks logic
+ */
+function calculateFinalGrades() {
+    if (!processedWorkbook || !processedWorkbook.final) {
+        alert('Please convert the file first');
+        return;
+    }
+
+    const esePassingPercentage = parseFloat(document.getElementById('esePassingMarks').value);
+    if (isNaN(esePassingPercentage) || esePassingPercentage < 30 || esePassingPercentage > 70) {
+        alert('Please enter valid ESE passing percentage (30-70%)');
+        return;
+    }
+
+    // Convert percentage to actual marks out of 50
+    const esePassingMarks = (esePassingPercentage / 100) * 50;
+
+    const finalData = processedWorkbook.final;
+
+    // Separate students based on ESE marks
+    const passingStudents = [];
+    const failingStudents = [];
+
+    finalData.forEach((student, index) => {
+        const studentWithTotal = {
+            ...student,
+            Total: Math.round(((student.ESE || 0) + (student.IA || 0) + (student.CSE || 0) + (student.TW || 0) + (student.VIVA || 0)) * 100) / 100,
+            StudentIndex: index
+        };
+
+        if ((student.ESE || 0) >= esePassingMarks) {
+            passingStudents.push(studentWithTotal);
+        } else {
+            failingStudents.push({
+                ...studentWithTotal,
+                Grade: 'F'
+            });
+        }
+    });
+
+    // Apply relative grading to passing students
+    const gradedPassingStudents = assignRelativeGrades(passingStudents);
+
+    // Combine all students back in original order
+    const allStudentsWithGrades = new Array(finalData.length);
+
+    // Place failing students
+    failingStudents.forEach(student => {
+        allStudentsWithGrades[student.StudentIndex] = student;
+    });
+
+    // Place passing students with grades
+    gradedPassingStudents.forEach(student => {
+        allStudentsWithGrades[student.StudentIndex] = student;
+    });
+
+    // Remove StudentIndex property
+    finalGradesData = allStudentsWithGrades.map(({ StudentIndex, ...student }) => student);
+
+    // Update statistics
+    document.getElementById('totalStudents').textContent = finalData.length;
+    document.getElementById('eseFailingCount').textContent = failingStudents.length;
+    document.getElementById('gradingCount').textContent = passingStudents.length;
+
+    // Update the final grades table
+    populateTable(finalGradesData, finalGradesTable, FINAL_STAGE_MAPPINGS, true);
+
+    // Enable download grades button
+    downloadGradesBtn.disabled = false;
+}
+
+/**
+ * Process Excel data and perform mappings
+ */
 async function processExcel(e) {
     e.preventDefault();
 
@@ -298,17 +462,6 @@ async function processExcel(e) {
             VIVA: Math.round(mapValue(row.VIVA || 0, FIRST_STAGE_MAPPINGS.VIVA, FINAL_STAGE_MAPPINGS.VIVA) * 100) / 100
         }));
 
-        // Create new worksheet with both mappings
-        const newWorkbook = XLSX.utils.book_new();
-
-        // Add first stage mapping sheet
-        const firstStageSheet = XLSX.utils.json_to_sheet(firstStageData);
-        XLSX.utils.book_append_sheet(newWorkbook, firstStageSheet, "First Stage Mapping");
-
-        // Add final stage mapping sheet
-        const finalStageSheet = XLSX.utils.json_to_sheet(finalStageData);
-        XLSX.utils.book_append_sheet(newWorkbook, finalStageSheet, "Final Stage Mapping");
-
         // Store data for downloads
         processedWorkbook = {
             first: firstStageData,
@@ -318,12 +471,13 @@ async function processExcel(e) {
         // Enable download buttons
         downloadFirstBtn.disabled = false;
         downloadFinalBtn.disabled = false;
+        calculateGradesBtn.disabled = false;
 
-        // Store processed data and update displays
-        processedWorkbook = {
-            first: firstStageData,
-            final: finalStageData
-        };
+        // Show passing marks section
+        passingMarksSection.style.display = 'block';
+
+        // Update passing marks display immediately
+        updatePassingMarksDisplay();
 
         // Update all tables with highlighting
         updateTableHighlighting();
@@ -337,39 +491,61 @@ async function processExcel(e) {
 }
 
 /**
- * @param {string} stage - Either 'first' or 'final'
+ * Download Excel file
+ * @param {string} stage - Either 'first', 'final', or 'grades'
  */
 function downloadExcel(stage) {
-    if (!processedWorkbook || !processedWorkbook[stage]) {
-        alert('Please convert the file first');
-        return;
+    let dataToDownload;
+    let filename;
+
+    if (stage === 'grades') {
+        if (!finalGradesData) {
+            alert('Please calculate final grades first');
+            return;
+        }
+        dataToDownload = finalGradesData;
+        filename = 'final_grades_with_ese_passing';
+    } else {
+        if (!processedWorkbook || !processedWorkbook[stage]) {
+            alert('Please convert the file first');
+            return;
+        }
+        dataToDownload = processedWorkbook[stage];
+        filename = `${stage}_stage_mapping`;
     }
 
     // Generate timestamp for filename
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(processedWorkbook[stage]);
-    XLSX.utils.book_append_sheet(wb, ws, `${stage.charAt(0).toUpperCase() + stage.slice(1)} Stage Mapping`);
-    XLSX.writeFile(wb, `${stage}_stage_mapping_${timestamp}.xlsx`);
+
+    const ws = XLSX.utils.json_to_sheet(dataToDownload);
+    XLSX.utils.book_append_sheet(wb, ws, `${stage.charAt(0).toUpperCase() + stage.slice(1)} Data`);
+    XLSX.writeFile(wb, `${filename}_${timestamp}.xlsx`);
 }
 
-// Event Listeners
-convertBtn.addEventListener('click', processExcel);
-
+/**
+ * Initialize the application
+ */
 function initializeApp() {
     // Reset all states
     originalJsonData = null;
     processedWorkbook = null;
+    finalGradesData = null;
 
     // Reset download buttons
     if (downloadFirstBtn) downloadFirstBtn.disabled = true;
     if (downloadFinalBtn) downloadFinalBtn.disabled = true;
+    if (downloadGradesBtn) downloadGradesBtn.disabled = true;
+    if (calculateGradesBtn) calculateGradesBtn.disabled = true;
 
-    // Hide preview section
+    // Hide sections
     if (dataPreviewSection) dataPreviewSection.style.display = 'none';
+    if (passingMarksSection) passingMarksSection.style.display = 'none';
 }
 
-
+/**
+ * Update table highlighting based on current data
+ */
 function updateTableHighlighting() {
     if (!originalJsonData) return;
 
@@ -381,24 +557,18 @@ function updateTableHighlighting() {
         VIVA: parseFloat(document.getElementById('vivaInput').value)
     };
 
-    let hasInvalidData = false;
-    originalJsonData.forEach(row => {
-        Object.entries(row).forEach(([field, value]) => {
-            if (value < 0 || (caps[field] && value > caps[field])) {
-                hasInvalidData = true;
-            }
-        });
-    });
-
-    if (hasInvalidData) {
-        // alert('Some values are invalid (negative or exceed maximum caps). These will be highlighted in orange.');
-    }
-
+    // Update original data table
     populateTable(originalJsonData, originalDataTable, caps);
+
+    // Update processed data tables if available
     if (processedWorkbook) {
         populateTable(processedWorkbook.first, firstMappedDataTable, FIRST_STAGE_MAPPINGS);
         populateTable(processedWorkbook.final, mappedDataTable, FINAL_STAGE_MAPPINGS);
-        updateHighestTotalMarks();
+    }
+
+    // Update final grades table if available
+    if (finalGradesData) {
+        populateTable(finalGradesData, finalGradesTable, FINAL_STAGE_MAPPINGS, true);
     }
 }
 
@@ -407,34 +577,69 @@ fileInput.addEventListener('change', handleFileUpload);
 convertBtn.addEventListener('click', processExcel);
 downloadFirstBtn.addEventListener('click', () => downloadExcel('first'));
 downloadFinalBtn.addEventListener('click', () => downloadExcel('final'));
+downloadGradesBtn.addEventListener('click', () => downloadExcel('grades'));
+calculateGradesBtn.addEventListener('click', calculateFinalGrades);
 
 // Add event listeners for cap input changes
 ['ese', 'ia', 'cse', 'tw', 'viva'].forEach(field => {
     document.getElementById(`${field}Input`).addEventListener('change', updateTableHighlighting);
 });
 
-// Initialize the app when the page loads
-initializeApp();
+// Add event listener for ESE passing marks change
+document.getElementById('esePassingMarks').addEventListener('input', function() {
+    updatePassingMarksDisplay();
+    if (finalGradesData) {
+        // Recalculate grades if data exists
+        calculateFinalGrades();
+    }
+});
 
-function updatePassingMarks() {
-    const input = document.getElementById("passingPercentageInput");
-    const percentage = parseFloat(input.value);
-    const highest = parseFloat(document.getElementById("highestTotalMarks").textContent);
-    if (!isNaN(percentage) && percentage >= 35 && percentage <= 50 && !isNaN(highest)) {
-        const passing = Math.round((percentage / 100) * highest * 100) / 100;
-        document.getElementById("passingMarks").textContent = passing;
+/**
+ * Update the passing marks display and statistics
+ */
+function updatePassingMarksDisplay() {
+    const esePassingPercentage = parseFloat(document.getElementById('esePassingMarks').value);
+
+    if (!isNaN(esePassingPercentage) && processedWorkbook && processedWorkbook.final) {
+        const esePassingMarks = (esePassingPercentage / 100) * 50;
+        const finalData = processedWorkbook.final;
+
+        // Count students
+        const totalStudents = finalData.length;
+        const failingStudents = finalData.filter(student => (student.ESE || 0) < esePassingMarks).length;
+        const passingStudents = totalStudents - failingStudents;
+
+        // Update display
+        document.getElementById('totalStudents').textContent = totalStudents;
+        document.getElementById('eseFailingCount').textContent = failingStudents;
+        document.getElementById('gradingCount').textContent = passingStudents;
+
+        // Show calculated passing marks
+        const passingMarksDisplay = document.createElement('small');
+        passingMarksDisplay.className = 'text-muted d-block mt-1';
+        passingMarksDisplay.textContent = `Passing marks: ${esePassingMarks.toFixed(1)} out of 50`;
+
+        // Remove existing display if any
+        const existingDisplay = document.querySelector('.passing-marks-display');
+        if (existingDisplay) {
+            existingDisplay.remove();
+        }
+
+        // Add new display
+        passingMarksDisplay.className += ' passing-marks-display';
+        document.getElementById('esePassingMarks').parentNode.appendChild(passingMarksDisplay);
     } else {
-        document.getElementById("passingMarks").textContent = "Invalid input";
+        // Reset display if invalid input
+        document.getElementById('totalStudents').textContent = '-';
+        document.getElementById('eseFailingCount').textContent = '-';
+        document.getElementById('gradingCount').textContent = '-';
+
+        const existingDisplay = document.querySelector('.passing-marks-display');
+        if (existingDisplay) {
+            existingDisplay.remove();
+        }
     }
 }
 
-
-function updateHighestTotalMarks() {
-    if (!processedWorkbook || !processedWorkbook.final) return;
-    const totals = processedWorkbook.final.map(row => (
-        (row.ESE || 0) + (row.IA || 0) + (row.CSE || 0) + (row.TW || 0) + (row.VIVA || 0)
-    ));
-    const maxTotal = Math.max(...totals);
-    document.getElementById("highestTotalMarks").textContent = maxTotal.toFixed(2);
-    updatePassingMarks();
-}
+// Initialize the app when the page loads
+initializeApp();
