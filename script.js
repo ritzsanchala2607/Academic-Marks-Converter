@@ -270,52 +270,43 @@ function parseHeaderCap(header) {
 function assignRelativeGrades(passingStudents) {
     if (passingStudents.length === 0) return [];
 
-    // Calculate totals for passing students
-    const totals = passingStudents.map(row =>
-        (row.ESE || 0) + (row.IA || 0) + (row.CSE || 0) + (row.TW || 0) + (row.VIVA || 0)
+    const totals = passingStudents.map(s =>
+        (s.ESE || 0) + (s.IA || 0) + (s.CSE || 0) + (s.TW || 0) + (s.VIVA || 0)
     );
-
-    // Pair totals with original index and sort descending
     const indexed = totals
         .map((t, i) => ({ total: t, idx: i }))
         .sort((a, b) => b.total - a.total);
 
     const N = passingStudents.length;
+    const baseCount = Math.floor(N / 7);
+    let rem = N % 7;
 
-    // Compute "base" bucket size and remainder
-    const base = Math.floor(N / 8);
-    let rem = N - base * 8;
+    const gradeGroups = ['O', 'A+', 'A', 'B+', 'B', 'C', 'D'];
+    const counts = { O: baseCount, "A+": baseCount, A: baseCount, "B+": baseCount, B: baseCount, C: baseCount, D: baseCount };
 
-    // Define grade order and initial counts
-    const grades = ['O', 'A+', 'A', 'B+', 'B', 'C', 'D', 'P']; // P for Pass (lowest passing grade)
-    const counts = grades.reduce((acc, g) => {
-        acc[g] = base;
-        return acc;
-    }, {});
-
-    // Distribute any leftover students starting at the middle
-    const middleOrder = ['B+', 'A', 'A+', 'O', 'D', 'C', 'B', 'P'];
+    const distributeOrder = ['B+', 'A', 'A+', 'O', 'D', 'C', 'B'];
     for (let i = 0; i < rem; i++) {
-        counts[middleOrder[i]]++;
+        counts[distributeOrder[i]]++;
     }
 
-    // Assign grade by slicing off each bucket from the top
+    counts['D'] = counts['O'];
+    counts['C'] = counts['A+'];
+    counts['B'] = counts['A'];
+
     const cutoffs = {};
-    let cursor = 0;
-    for (const g of grades) {
-        cutoffs[g] = [cursor, cursor + counts[g]]; // [start, end) in sorted list
-        cursor += counts[g];
+    let start = 0;
+    for (const grade of gradeGroups) {
+        cutoffs[grade] = [start, start + counts[grade]];
+        start += counts[grade];
     }
 
-    // Build result array
     const result = new Array(N);
     indexed.forEach((item, rank) => {
-        // Find which grade bracket this rank falls into
-        let assigned = 'P';
-        for (const g of grades) {
-            const [start, end] = cutoffs[g];
-            if (rank >= start && rank < end) {
-                assigned = g;
+        let assigned = 'B+';
+        for (const grade of gradeGroups) {
+            const [s, e] = cutoffs[grade];
+            if (rank >= s && rank < e) {
+                assigned = grade;
                 break;
             }
         }
@@ -328,6 +319,8 @@ function assignRelativeGrades(passingStudents) {
 
     return result;
 }
+
+
 
 /**
  * Calculate final grades with ESE passing marks logic
