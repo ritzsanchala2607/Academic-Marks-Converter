@@ -331,14 +331,12 @@ function calculateFinalGrades() {
         return;
     }
 
-    const esePassingPercentage = parseFloat(document.getElementById('esePassingMarks').value);
-    if (isNaN(esePassingPercentage) || esePassingPercentage < 30 || esePassingPercentage > 70) {
-        alert('Please enter valid ESE passing percentage (30-70%)');
+    const esePassingMarks = parseFloat(document.getElementById('esePassingMarks').value);
+    if (isNaN(esePassingMarks) || esePassingMarks < 0 || esePassingMarks > 50) {
+        alert('Please enter valid ESE passing marks (0-50)');
         return;
     }
 
-    // Convert percentage to actual marks out of 50
-    const esePassingMarks = (esePassingPercentage / 100) * 50;
 
     const finalData = processedWorkbook.final;
 
@@ -591,46 +589,35 @@ document.getElementById('esePassingMarks').addEventListener('input', function() 
  * Update the passing marks display and statistics
  */
 function updatePassingMarksDisplay() {
-    const esePassingPercentage = parseFloat(document.getElementById('esePassingMarks').value);
+    const esePassingMarks = parseFloat(document.getElementById('esePassingMarks').value);
 
-    if (!isNaN(esePassingPercentage) && processedWorkbook && processedWorkbook.final) {
-        const esePassingMarks = (esePassingPercentage / 100) * 50;
+    if (!isNaN(esePassingMarks) && processedWorkbook && processedWorkbook.final) {
         const finalData = processedWorkbook.final;
 
-        // Count students
         const totalStudents = finalData.length;
         const failingStudents = finalData.filter(student => (student.ESE || 0) < esePassingMarks).length;
         const passingStudents = totalStudents - failingStudents;
 
-        // Update display
         document.getElementById('totalStudents').textContent = totalStudents;
         document.getElementById('eseFailingCount').textContent = failingStudents;
         document.getElementById('gradingCount').textContent = passingStudents;
 
-        // Show calculated passing marks
         const passingMarksDisplay = document.createElement('small');
         passingMarksDisplay.className = 'text-muted d-block mt-1';
         passingMarksDisplay.textContent = `Passing marks: ${esePassingMarks.toFixed(1)} out of 50`;
 
-        // Remove existing display if any
         const existingDisplay = document.querySelector('.passing-marks-display');
-        if (existingDisplay) {
-            existingDisplay.remove();
-        }
+        if (existingDisplay) existingDisplay.remove();
 
-        // Add new display
         passingMarksDisplay.className += ' passing-marks-display';
         document.getElementById('esePassingMarks').parentNode.appendChild(passingMarksDisplay);
     } else {
-        // Reset display if invalid input
         document.getElementById('totalStudents').textContent = '-';
         document.getElementById('eseFailingCount').textContent = '-';
         document.getElementById('gradingCount').textContent = '-';
 
         const existingDisplay = document.querySelector('.passing-marks-display');
-        if (existingDisplay) {
-            existingDisplay.remove();
-        }
+        if (existingDisplay) existingDisplay.remove();
     }
 }
 
